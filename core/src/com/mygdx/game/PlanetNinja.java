@@ -6,6 +6,8 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Cursor;
+import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -24,7 +26,7 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
     //instance
     Texture background, apple, bamb, cherry, greenApple, banana, coconut, healBar, heart;
-
+    Texture image, image2;
     BitmapFont font;
 
     FreeTypeFontGenerator freeTypeFontGenerator;
@@ -35,7 +37,7 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
     private double currentTime;
     private double gameOverTime = -1.0f;
-
+    Cursor cursor;
     Music music;
 
     Random random = new Random();
@@ -45,7 +47,7 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
     float genCounter;
     private final float genSpeedStart = 1.1f;
     float genSpeed = genSpeedStart;
-
+    FreeTypeFontGenerator.FreeTypeFontParameter parameter;
 
     @Override
     public void create() {
@@ -62,20 +64,27 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
         greenApple = new Texture("greenApple.png");
         coconut = new Texture("Coconut.png");
         banana = new Texture("muz.png");
+        image = new Texture("1425569252372.png");
+        image2 = new Texture("template.png");
 
 
         Fruit.radius = Math.max(Gdx.graphics.getHeight(), Gdx.graphics.getWidth()) / 17f;
+/*
 
+        Pixmap pixmap = new Pixmap(Gdx.files.internal("Blade.png"));
+        Cursor cursor = Gdx.graphics.newCursor(pixmap, 0, 0);
+*/
 
         music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
+
 
         Gdx.input.setInputProcessor(this);
 
         freeTypeFontGenerator = new FreeTypeFontGenerator(Gdx.files.internal("robotobold.ttf"));
-        FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
         parameter.color = Color.RED;
         parameter.size = 60;
-        parameter.characters = "0123456789  LAYPCScrecutoplay .;: +-*#";
+        parameter.characters = "0123456789 GAMEOVERLYPCScrecutoplay .;:+-*#";
         font = freeTypeFontGenerator.generateFont(parameter);
 
     }
@@ -105,12 +114,12 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
         }
         if (lives > 0) {
             //game Mod
-            genSpeed -= deltaTime * 0.0008f;
+            genSpeed -= deltaTime * 0.008f;
             if (genCounter <= 0f) {
                 genCounter = genSpeed * 1.6f;
                 addItem();
             } else {
-                genCounter -= deltaTime;
+                genCounter -= deltaTime*1.5f;
             }
 
 
@@ -139,15 +148,21 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
                         batch.draw(greenApple, fruit.getPos().x, fruit.getPos().y, Fruit.radius * 0.9f, Fruit.radius * 0.9f);
 
                 }
+
+
             }
 
 
         }
         font.draw(batch, " #Score:" + score, 20, 60);
-      /*  if(lives<=0){
-            font.draw(batch, "PLAY", Gdx.graphics.getWidth()*0.5f, Gdx.graphics.getHeight()*0.5f);
-        }*/
+        if (lives == 0) {
+
+            batch.draw(image, Gdx.graphics.getWidth() * 0.37f, Gdx.graphics.getHeight() * 0.5f);
+        } else if (lives < 0) {
+            batch.draw(image2, Gdx.graphics.getWidth() * 0.37f, Gdx.graphics.getHeight() * 0.5f);
+        }
         //font.draw(batch, "Cut to Play", Gdx.graphics.getWidth() * 0.39f, Gdx.graphics.getHeight() * 0.5f);
+
         batch.end();
     }
 
@@ -156,7 +171,7 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
         float pos = random.nextFloat() * (Math.max(Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
         //Konum ve Hız
-        Fruit item = new Fruit(new Vector2(pos, -Fruit.radius), new Vector2((Gdx.graphics.getWidth() * 0.3f) * (random.nextFloat() - 0.3f), (Gdx.graphics.getHeight() * 0.64f)));
+        Fruit item = new Fruit(new Vector2(pos, -Fruit.radius), new Vector2((Gdx.graphics.getWidth() * 0.3f) * (random.nextFloat() - 0.1f), (Gdx.graphics.getHeight() * 0.65f)));
         float type = random.nextFloat();
         if (type > 0.94) {
             item.type = Fruit.Type.LIFE;
@@ -228,10 +243,10 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
         } else {
             int plusScore = 0;
             Array<Fruit> toRemove = new Array<Fruit>();
-            Vector2 pos = new Vector2(screenX, Gdx.graphics.getHeight()-screenY);
+            Vector2 pos = new Vector2(screenX, Gdx.graphics.getHeight() - screenY);
             for (Fruit f : fruitArray) {
                 System.out.println("getHeight - y: " + screenY);
-                System.out.println("getHeight - y: " + (Gdx.graphics.getHeight()-screenY));
+                System.out.println("getHeight - y: " + (Gdx.graphics.getHeight() - screenY));
                 System.out.println("getHeight - y: " + f.getPos());
                 System.out.println("distance: " + pos.dst2(f.pos));
                 System.out.println("distance: " + f.clicked(pos));
@@ -254,7 +269,7 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
                             lives++;
                             break;
                         case GREENAPPLE:
-                            plusScore+=1;
+                            plusScore += 1;
                             break;
 
 
