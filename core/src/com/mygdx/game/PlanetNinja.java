@@ -4,18 +4,18 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.audio.Sound;
+
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Cursor;
-import com.badlogic.gdx.graphics.Pixmap;
+
+
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
+
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.ScreenUtils;
+
 import com.badlogic.gdx.utils.TimeUtils;
 
 import java.util.Random;
@@ -23,21 +23,21 @@ import java.util.Random;
 public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
     SpriteBatch batch;
-
+    ;
     //instance
     Texture background, apple, bamb, cherry, greenApple, banana, coconut, healBar, heart;
-    Texture image, image2;
+    Texture image, image2,image3;
     BitmapFont font;
 
     FreeTypeFontGenerator freeTypeFontGenerator;
 
     int lives = 0;
     int score = 0;
-    Sound sound;
+
 
     private double currentTime;
     private double gameOverTime = -1.0f;
-    Cursor cursor;
+
     Music music;
 
     Random random = new Random();
@@ -48,6 +48,7 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
     private final float genSpeedStart = 1.1f;
     float genSpeed = genSpeedStart;
     FreeTypeFontGenerator.FreeTypeFontParameter parameter;
+    int startStop = 0;
 
     @Override
     public void create() {
@@ -55,6 +56,7 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
 
         //instance
+        image3=new Texture("Tekraroyna.png");
         heart = new Texture("heart.png");
         healBar = new Texture("healBar.png");
         background = new Texture("bg.png");
@@ -82,11 +84,11 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
         freeTypeFontGenerator = new FreeTypeFontGenerator(Gdx.files.internal("robotobold.ttf"));
         parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
-        parameter.color = Color.RED;
+        parameter.color = Color.GOLD;
         parameter.size = 60;
-        parameter.characters = "0123456789 GAMEOVERLYPCScrecutoplay .;:+-*#";
+        parameter.characters = "0123456789 GAMEOVERLYPCScrecutoplay .;+:<)(>+-*#";
         font = freeTypeFontGenerator.generateFont(parameter);
-
+//0123456789 GAMEOVERLYPCScrecutoplay .;:+-*#"
     }
 
     @Override
@@ -119,7 +121,7 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
                 genCounter = genSpeed * 1.6f;
                 addItem();
             } else {
-                genCounter -= deltaTime*1.5f;
+                genCounter -= deltaTime * 1.5f;
             }
 
 
@@ -153,16 +155,30 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
             }
 
 
-        }
-        font.draw(batch, " #Score:" + score, 20, 60);
-        if (lives == 0) {
+        }if(lives>0)
+        font.draw(batch, " #Score:" + (score-1), 20, 60);
 
-            batch.draw(image, Gdx.graphics.getWidth() * 0.37f, Gdx.graphics.getHeight() * 0.5f);
-        } else if (lives < 0) {
-            batch.draw(image2, Gdx.graphics.getWidth() * 0.37f, Gdx.graphics.getHeight() * 0.5f);
+        //   if (lives == 0) {
+        if (score == 0) {
+            batch.draw(image,Gdx.graphics.getWidth() * 0.37f, Gdx.graphics.getHeight() * 0.5f);
+
+        } else if (score > 1 && lives <= 0) {
+            batch.draw(image3, Gdx.graphics.getWidth() * 0.37f, Gdx.graphics.getHeight() * 0.45f);//tekrar oyna btonu gelecek
+            font.draw(batch, "  + GAMEOVER +", Gdx.graphics.getWidth() * 0.365f, Gdx.graphics.getHeight() * 0.40f);//game over image
+            font.draw(batch, " # SCORE :" + (score-1), Gdx.graphics.getWidth() * 0.38f, Gdx.graphics.getHeight() * 0.32f);
         }
+//}
+
+
         //font.draw(batch, "Cut to Play", Gdx.graphics.getWidth() * 0.39f, Gdx.graphics.getHeight() * 0.5f);
 
+     /*   if (lives <= 0 && currentTime - gameOverTime > 2f)
+
+            font.draw(batch,"GAME OVER",Gdx.graphics.getWidth() *0.37f,Gdx.graphics.getHeight() * 0.5f);
+
+
+        batch.draw(image, Gdx.graphics.getWidth() * 0.37f, Gdx.graphics.getHeight() * 0.5f);
+*/
         batch.end();
     }
 
@@ -223,6 +239,11 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+
+        if (score == 0) {
+            score = 1;
+        }
+
         return false;
     }
 
@@ -230,12 +251,13 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointer) {
 
+
         if (lives <= 0 && currentTime - gameOverTime > 2f) {
 
             //menu mod
             gameOverTime = 0f;
-            score = 0;
             lives = 4;
+            score = 0;
             genSpeed = genSpeedStart;
             fruitArray.clear();
 
