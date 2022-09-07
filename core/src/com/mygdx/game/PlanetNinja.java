@@ -11,22 +11,26 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
+
 import com.badlogic.gdx.math.Vector2;
 
 import com.badlogic.gdx.utils.Array;
 
 import com.badlogic.gdx.utils.TimeUtils;
 
+
 import java.util.Random;
+
 
 public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
     SpriteBatch batch;
-    ;
+
     //instance
     Texture background, apple, bamb, cherry, greenApple, banana, coconut, healBar, heart;
-    Texture image, image2,image3;
+    Texture image, image2, image3, image4;
     BitmapFont font;
 
     FreeTypeFontGenerator freeTypeFontGenerator;
@@ -34,6 +38,8 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
     int lives = 0;
     int score = 0;
 
+
+    int scoreTouch = 0;
 
     private double currentTime;
     private double gameOverTime = -1.0f;
@@ -43,12 +49,15 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
     Random random = new Random();
     Array<Fruit> fruitArray = new Array<Fruit>();
 
+    private volatile boolean dragging = false;
+    private volatile int lastDragX = 0;
+    private volatile int lastDragY = 0;
 
     float genCounter;
     private final float genSpeedStart = 1.1f;
     float genSpeed = genSpeedStart;
     FreeTypeFontGenerator.FreeTypeFontParameter parameter;
-    int startStop = 0;
+
 
     @Override
     public void create() {
@@ -56,7 +65,8 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
 
         //instance
-        image3=new Texture("Tekraroyna.png");
+
+        image3 = new Texture("Tekraroyna.png");
         heart = new Texture("heart.png");
         healBar = new Texture("healBar.png");
         background = new Texture("bg.png");
@@ -71,43 +81,34 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
 
         Fruit.radius = Math.max(Gdx.graphics.getHeight(), Gdx.graphics.getWidth()) / 17f;
-/*
-
-        Pixmap pixmap = new Pixmap(Gdx.files.internal("Blade.png"));
-        Cursor cursor = Gdx.graphics.newCursor(pixmap, 0, 0);
-*/
 
         music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
-
-
         Gdx.input.setInputProcessor(this);
-
         freeTypeFontGenerator = new FreeTypeFontGenerator(Gdx.files.internal("robotobold.ttf"));
         parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
         parameter.color = Color.GOLD;
         parameter.size = 60;
-        parameter.characters = "0123456789 GAMEOVERLYPCScrecutoplay .;+:<)(>+-*#";
+        parameter.characters = "0123456789 XCMBGAMEOVERLYPCScrecutoplay .;+:<)(>+-*#";
         font = freeTypeFontGenerator.generateFont(parameter);
-//0123456789 GAMEOVERLYPCScrecutoplay .;:+-*#"
+        //0123456789 GAMEOVERLYPCScrecutoplay .;:+-*#"
     }
-
     @Override
     public void render() {
 
         batch.begin();
 
         double newTime = TimeUtils.millis() / 1000.0;//real time
-        System.out.println("newTime:" + newTime);
+
         double frameTime = Math.min(newTime - currentTime, 0.3);
         float deltaTime = (float) frameTime;
-        System.out.println("detaTime" + deltaTime);
+
         currentTime = newTime;
         //konum -- background size
         batch.draw(background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         music.play();
         music.setVolume(10f);
         music.setLooping(true);
-
+        //  drawer.line(0, 0, 100, 100);
 
         if (lives <= 0 && gameOverTime == 0f) {
             //game Over
@@ -126,7 +127,7 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
 
             for (int i = 0; i < lives; i++) {
-                //çizeceği texture,konum
+                //texture,konum
                 batch.draw(bamb, i * 22f * 3, Gdx.graphics.getHeight() - 125f, 125f, 125f);
             }
 
@@ -150,35 +151,53 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
                         batch.draw(greenApple, fruit.getPos().x, fruit.getPos().y, Fruit.radius * 0.9f, Fruit.radius * 0.9f);
 
                 }
-
-
             }
 
+            boolean holdlives = false;
+            Array<Fruit> tofruits = new Array<Fruit>();
+            for (Fruit fruit2 : fruitArray) {
+                if (fruit2.outofScreen()) {
+                    tofruits.add(fruit2);
+                    if (fruit2.living && fruit2.type == Fruit.Type.REGULAR) {
+                        lives--;
+                        holdlives = true;
+                        break;
+                    }
+                    if (fruit2.living && fruit2.type == Fruit.Type.GREENAPPLE) {
+                        lives--;
+                        break;
+                    }
+                    if (fruit2.living && fruit2.type == Fruit.Type.EXTRA) {
+                        lives--;
+                        break;
+                    }
+                }
+            }
 
-        }if(lives>0)
-        font.draw(batch, " #Score:" + (score-1), 20, 60);
+            if (holdlives) {
+                for (Fruit f : fruitArray) {
+                    f.living = false;
+                }
+            }
+            for (Fruit f : tofruits) {
 
-        //   if (lives == 0) {
-        if (score == 0) {
-            batch.draw(image,Gdx.graphics.getWidth() * 0.37f, Gdx.graphics.getHeight() * 0.5f);
-
-        } else if (score > 1 && lives <= 0) {
-            batch.draw(image3, Gdx.graphics.getWidth() * 0.37f, Gdx.graphics.getHeight() * 0.45f);//tekrar oyna btonu gelecek
-            font.draw(batch, "  + GAMEOVER +", Gdx.graphics.getWidth() * 0.365f, Gdx.graphics.getHeight() * 0.40f);//game over image
-            font.draw(batch, " # SCORE :" + (score-1), Gdx.graphics.getWidth() * 0.38f, Gdx.graphics.getHeight() * 0.32f);
+                fruitArray.removeValue(f, true);
+            }
         }
-//}
+        if (lives > 0) {
+            font.draw(batch, " + SCORE:" + (score - 1), 20, 60);
+            font.draw(batch, " + COMBO :+" + scoreTouch, Gdx.graphics.getWidth() * 0.81f, 60);
+        }
+        //   if (lives == 0) {
+        if (score == 0  ) {
+            batch.draw(image, Gdx.graphics.getWidth() * 0.37f, Gdx.graphics.getHeight() * 0.5f);
 
+        }  if (score > 1 && lives <= 0) {
+            batch.draw(image3, Gdx.graphics.getWidth() * 0.37f, Gdx.graphics.getHeight() * 0.45f);//tekrar oyna btonu gelecek
+            font.draw(batch, "  + GAME OVER +", Gdx.graphics.getWidth() * 0.365f, Gdx.graphics.getHeight() * 0.40f);//game over image
+            font.draw(batch, " $ SCORE: " + (score - 1), Gdx.graphics.getWidth() * 0.38f, Gdx.graphics.getHeight() * 0.32f);
+        }
 
-        //font.draw(batch, "Cut to Play", Gdx.graphics.getWidth() * 0.39f, Gdx.graphics.getHeight() * 0.5f);
-
-     /*   if (lives <= 0 && currentTime - gameOverTime > 2f)
-
-            font.draw(batch,"GAME OVER",Gdx.graphics.getWidth() *0.37f,Gdx.graphics.getHeight() * 0.5f);
-
-
-        batch.draw(image, Gdx.graphics.getWidth() * 0.37f, Gdx.graphics.getHeight() * 0.5f);
-*/
         batch.end();
     }
 
@@ -187,7 +206,7 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
         float pos = random.nextFloat() * (Math.max(Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
         //Konum ve Hız
-        Fruit item = new Fruit(new Vector2(pos, -Fruit.radius), new Vector2((Gdx.graphics.getWidth() * 0.3f) * (random.nextFloat() - 0.1f), (Gdx.graphics.getHeight() * 0.65f)));
+        Fruit item = new Fruit(new Vector2(pos * 0.4f, -Fruit.radius), new Vector2((Gdx.graphics.getWidth() * 0.2f) * (random.nextFloat() - 0.1f), (Gdx.graphics.getHeight() * 0.65f)));
         float type = random.nextFloat();
         if (type > 0.94) {
             item.type = Fruit.Type.LIFE;
@@ -234,24 +253,10 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        return false;
-    }
-
-    @Override
-    public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-
-        if (score == 0) {
-            score = 1;
-        }
-
-        return false;
-    }
-
-    //dokunduğunda ne olacak
-    @Override
-    public boolean touchDragged(int screenX, int screenY, int pointer) {
-
-
+        dragging = true;
+        lastDragX = screenX;
+        lastDragY = screenY;
+        System.out.println(screenX + " Down ---- " + screenY);
         if (lives <= 0 && currentTime - gameOverTime > 2f) {
 
             //menu mod
@@ -262,50 +267,85 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
             fruitArray.clear();
 
 
-        } else {
-            int plusScore = 0;
-            Array<Fruit> toRemove = new Array<Fruit>();
-            Vector2 pos = new Vector2(screenX, Gdx.graphics.getHeight() - screenY);
-            for (Fruit f : fruitArray) {
-                System.out.println("getHeight - y: " + screenY);
-                System.out.println("getHeight - y: " + (Gdx.graphics.getHeight() - screenY));
-                System.out.println("getHeight - y: " + f.getPos());
-                System.out.println("distance: " + pos.dst2(f.pos));
-                System.out.println("distance: " + f.clicked(pos));
-                System.out.println("distance: " + Fruit.radius * Fruit.radius + 1);
-                if (f.clicked(pos)) {
-                    toRemove.add(f);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+        dragging = false;
+        if (score == 0) {
+            score = 1;
+        }
+
+        System.out.println(screenX + "Up  ---- " + screenY);
+
+        return false;
+    }
+
+    //dokunduğunda ne olacak
+    @Override
+    public boolean touchDragged(int screenX, int screenY, int pointer) {
 
 
-                    switch (f.type) {
-                        case REGULAR:
-                            plusScore++;
-                            break;
-                        case ENEMY:
-                            lives--;
-                            break;
-                        case EXTRA:
-                            plusScore += 2;
-                            break;
-                        case LIFE:
-                            lives++;
-                            break;
-                        case GREENAPPLE:
-                            plusScore += 1;
-                            break;
 
+     if (dragging) {
+            int deltaX = screenX - lastDragX;
+            if (deltaX < 0) {
+                deltaX *= -1;
+            }
+            int deltaY = screenY - lastDragY;
+            if (deltaY < 0) {
+                deltaY *= -1;
+            }
+            lastDragX = screenX;
+            lastDragY = screenY;
+
+            if (deltaX > Gdx.graphics.getWidth()*0.035f || deltaY>Gdx.graphics.getHeight()*0.020f) {
+                System.out.println(screenX + "Move  ---- " + screenY);
+                int plusScore = 0;
+                Array<Fruit> toRemove = new Array<Fruit>();
+                Vector2 pos = new Vector2(screenX, Gdx.graphics.getHeight() - screenY);
+                for (Fruit f : fruitArray) {
+
+                    if (f.clicked(pos)) {
+                        toRemove.add(f);
+
+
+                        switch (f.type) {
+                            case REGULAR:
+                                plusScore++;
+                                scoreTouch = 1;
+                                break;
+                            case ENEMY:
+                                lives--;
+                                break;
+                            case EXTRA:
+                                plusScore += 2;
+                                scoreTouch = 4;
+                                break;
+                            case LIFE:
+                                lives++;
+                                scoreTouch = 1;
+                                break;
+                            case GREENAPPLE:
+                                plusScore += 1;
+                                scoreTouch = 1;
+                                break;
+
+
+                        }
 
                     }
                 }
+
+                score += plusScore * plusScore;
+
+
+                for (Fruit f : toRemove) {
+                    fruitArray.removeValue(f, true);
+                }
             }
-
-            score += plusScore * plusScore;
-
-
-            for (Fruit f : toRemove) {
-                fruitArray.removeValue(f, true);
-            }
-
         }
 
 
@@ -314,6 +354,7 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
     @Override
     public boolean mouseMoved(int screenX, int screenY) {
+
         return false;
     }
 

@@ -14,6 +14,7 @@ public class Fruit {
     Type type;
     Vector2 pos;
     Vector2 velocity;
+    public boolean living=true;
 
     //pozisyon and hız
     Fruit(Vector2 pos, Vector2 velocity) {

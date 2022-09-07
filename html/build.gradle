@@ -90,3 +90,16 @@ sourceCompatibility = 1.7
 sourceSets.main.java.srcDirs = [ "src/" ]
 
 eclipse.project.name = appName + "-html"
+
+
+project(":html") {
+    apply plugin: "gwt"
+    apply plugin: "war"
+
+
+    dependencies {
+
+        implementation "space.earlygrey:shapedrawer:$shapedrawerVersion:sources"
+    }
+}
+
