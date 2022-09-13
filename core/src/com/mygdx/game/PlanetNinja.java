@@ -13,10 +13,12 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -40,6 +42,8 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
     Texture background, apple, bamb, cherry, greenApple, banana, coconut, healBar, heart;
     Texture image, image2, image3, image4;
     BitmapFont font;
+    TextureRegion[] textureRegion;
+    Animation animation;
 
     FreeTypeFontGenerator freeTypeFontGenerator;
 
@@ -80,11 +84,17 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
         shapeRenderer = new ShapeRenderer();
 
         batch = new SpriteBatch();
-       /* img = new Texture("healBar.png");*/
-        img = new Texture("sword2-removebg-preview.png");
-        sprite = new Sprite(img);
+        /* img = new Texture("healBar.png");*/
+        img = new Texture(Gdx.files.internal("sword2-removebg-preview.png"));
+        img.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
 
+        sprite = new Sprite(img);
         sprite.setPosition(Gdx.graphics.getWidth() / 2 - sprite.getWidth() / 2, Gdx.graphics.getHeight() / 2 - sprite.getHeight() / 2);
+        sprite.setOrigin(100, 100);
+//sprite.setSize();
+
+
+
 
         pixmap = new Pixmap(64, 64, Pixmap.Format.RGB888);
 
@@ -117,6 +127,8 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
     }
 
+    int t = 0;
+    boolean status = false;
     @Override
     public void render() {
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
@@ -128,21 +140,26 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
         }
 
         if (Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
-            sprite.setPosition(Gdx.input.getX(),(Gdx.input.getY()-1050)*(-1));
+            sprite.setPosition(Gdx.input.getX(), (Gdx.input.getY() - 1050) * (-1));
 
-            System.out.println(Gdx.input.getX()+" --"+(Gdx.input.getY()-100)*(-1));
+            System.out.println(Gdx.input.getX() + " --" + (Gdx.input.getY() - 100) * (-1));
 
         }
 
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
         batch.begin();
-
-
-
-
-
+        if(t == 45){
+            status = true;
+        }else if(t == 0){
+            status = false;
+        }
+        if(status){
+            t--;
+        }else{
+            t++;
+        }
+        sprite.setRotation(t);
 
         double newTime = TimeUtils.millis() / 1000.0;//real time
 
@@ -233,9 +250,12 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
             }
         }
         if (lives > 0) {
+
             font.draw(batch, " + SCORE:" + (score - 1), 20, 60);
             font.draw(batch, " + COMBO :+" + scoreTouch, Gdx.graphics.getWidth() * 0.81f, 60);
-            batch.draw(sprite, sprite.getX(), sprite.getY());
+
+            sprite.draw(batch);
+
         }
         //   if (lives == 0) {
         if (score == 0) {
@@ -322,6 +342,8 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
 
         }
+
+
         return false;
     }
 
@@ -409,7 +431,7 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
     @Override
     public boolean mouseMoved(int screenX, int screenY) {
-        sprite.setPosition(screenX,Gdx.graphics.getHeight()-screenY);
+        sprite.setPosition(screenX, Gdx.graphics.getHeight() - screenY);
 
         return false;
     }
