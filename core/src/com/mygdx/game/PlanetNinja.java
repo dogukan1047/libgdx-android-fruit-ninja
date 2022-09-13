@@ -1,21 +1,28 @@
 package com.mygdx.game;
 
 import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.audio.Music;
 
 import com.badlogic.gdx.graphics.Color;
 
 
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 
+import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.utils.Array;
 
 import com.badlogic.gdx.utils.TimeUtils;
@@ -27,7 +34,8 @@ import java.util.Random;
 public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
     SpriteBatch batch;
-
+    Texture img;
+    Sprite sprite;
     //instance
     Texture background, apple, bamb, cherry, greenApple, banana, coconut, healBar, heart;
     Texture image, image2, image3, image4;
@@ -37,6 +45,11 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
     int lives = 0;
     int score = 0;
+
+    ShapeRenderer shapeRenderer;
+
+
+    Pixmap pixmap;
 
 
     int scoreTouch = 0;
@@ -52,6 +65,8 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
     private volatile boolean dragging = false;
     private volatile int lastDragX = 0;
     private volatile int lastDragY = 0;
+    private volatile int lastUpY = 0;
+    private volatile int lastUpX = 0;
 
     float genCounter;
     private final float genSpeedStart = 1.1f;
@@ -61,8 +76,17 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
     @Override
     public void create() {
-        batch = new SpriteBatch();
 
+        shapeRenderer = new ShapeRenderer();
+
+        batch = new SpriteBatch();
+       /* img = new Texture("healBar.png");*/
+        img = new Texture("sword2-removebg-preview.png");
+        sprite = new Sprite(img);
+
+        sprite.setPosition(Gdx.graphics.getWidth() / 2 - sprite.getWidth() / 2, Gdx.graphics.getHeight() / 2 - sprite.getHeight() / 2);
+
+        pixmap = new Pixmap(64, 64, Pixmap.Format.RGB888);
 
         //instance
 
@@ -90,12 +114,35 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
         parameter.size = 60;
         parameter.characters = "0123456789 XCMBGAMEOVERLYPCScrecutoplay .;+:<)(>+-*#";
         font = freeTypeFontGenerator.generateFont(parameter);
-        //0123456789 GAMEOVERLYPCScrecutoplay .;:+-*#"
+
     }
+
     @Override
     public void render() {
+        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+            sprite.translateX(-1f);
+        }
+
+        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+            sprite.translateX(1f);
+        }
+
+        if (Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
+            sprite.setPosition(Gdx.input.getX(),(Gdx.input.getY()-1050)*(-1));
+
+            System.out.println(Gdx.input.getX()+" --"+(Gdx.input.getY()-100)*(-1));
+
+        }
+
+        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         batch.begin();
+
+
+
+
+
 
         double newTime = TimeUtils.millis() / 1000.0;//real time
 
@@ -109,6 +156,7 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
         music.setVolume(10f);
         music.setLooping(true);
         //  drawer.line(0, 0, 100, 100);
+
 
         if (lives <= 0 && gameOverTime == 0f) {
             //game Over
@@ -187,16 +235,20 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
         if (lives > 0) {
             font.draw(batch, " + SCORE:" + (score - 1), 20, 60);
             font.draw(batch, " + COMBO :+" + scoreTouch, Gdx.graphics.getWidth() * 0.81f, 60);
+            batch.draw(sprite, sprite.getX(), sprite.getY());
         }
         //   if (lives == 0) {
-        if (score == 0  ) {
+        if (score == 0) {
             batch.draw(image, Gdx.graphics.getWidth() * 0.37f, Gdx.graphics.getHeight() * 0.5f);
 
-        }  if (score > 1 && lives <= 0) {
+        }
+        if (score > 1 && lives <= 0) {
             batch.draw(image3, Gdx.graphics.getWidth() * 0.37f, Gdx.graphics.getHeight() * 0.45f);//tekrar oyna btonu gelecek
             font.draw(batch, "  + GAME OVER +", Gdx.graphics.getWidth() * 0.365f, Gdx.graphics.getHeight() * 0.40f);//game over image
             font.draw(batch, " $ SCORE: " + (score - 1), Gdx.graphics.getWidth() * 0.38f, Gdx.graphics.getHeight() * 0.32f);
+
         }
+
 
         batch.end();
     }
@@ -231,6 +283,8 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
         font.dispose();
         freeTypeFontGenerator.dispose();
         music.dispose();
+        shapeRenderer.dispose();
+        img.dispose();
 
 
     }
@@ -273,6 +327,8 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+        lastUpX = screenX;
+        lastUpY = screenY;
         dragging = false;
         if (score == 0) {
             score = 1;
@@ -286,10 +342,9 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
     //dokunduğunda ne olacak
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointer) {
-
-
-
-     if (dragging) {
+        /*   font.draw(batch, "---",  screenX, screenY);
+         */
+        if (dragging) {
             int deltaX = screenX - lastDragX;
             if (deltaX < 0) {
                 deltaX *= -1;
@@ -301,7 +356,7 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
             lastDragX = screenX;
             lastDragY = screenY;
 
-            if (deltaX > Gdx.graphics.getWidth()*0.035f || deltaY>Gdx.graphics.getHeight()*0.020f) {
+            if (deltaX > Gdx.graphics.getWidth() * 0.035f || deltaY > Gdx.graphics.getHeight() * 0.020f) {
                 System.out.println(screenX + "Move  ---- " + screenY);
                 int plusScore = 0;
                 Array<Fruit> toRemove = new Array<Fruit>();
@@ -354,6 +409,7 @@ public class PlanetNinja extends ApplicationAdapter implements InputProcessor {
 
     @Override
     public boolean mouseMoved(int screenX, int screenY) {
+        sprite.setPosition(screenX,Gdx.graphics.getHeight()-screenY);
 
         return false;
     }
